@@ -1,0 +1,26 @@
+{
+  "name": "tus-nodejs",
+  "version": "0.0.1",
+  "author": "simsicon <simsicon@gmail.com>",
+  "description": "A nodejs implementation for tus protocol",
+  "contributors": [ 
+    {
+      "name": "simsicon",
+      "email": "simsicon@gmail.com"
+    } 
+  ],
+  "dependencies" : {
+    "connect"   :  ">=2.7.6",
+    "request" :  ">=2.20.0",
+    "underscore" : ">=1.4.4",
+    "node-uuid" : ">=1.4.0",
+    "mongoq" : ">=0.2.3"
+  },
+  "devDependencies": {
+    "vows"    :  "0.5.x"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.8.22"
+  }
+}
