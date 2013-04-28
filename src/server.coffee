@@ -11,24 +11,6 @@ file_path = (uuid, filename) ->
   filename = filename || ''
   path.join(RECEIVE_FILES_DIR, uuid, '/', filename)
 
-get_head_headers = (files, file_id, callback) ->
-  files.findOne {uuid: file_id}, (err, file) ->
-    if err
-      console.log "Mongo error" + err
-      throw err
-
-    fs.stat 'files/' + file_id + '/' + file['content-disposition'].split('filename')[1].split('"')[1], (err, stat) ->
-    
-      headers =
-        'Content-Type': file['content-type']
-        'Content-Length': file['content-length']
-        'Content-Disposition': file['content-disposition']
-        'Range': 0 + '-' + stat['size']
-
-      console.log "Radio is Head"
-      callback headers
-
-
 server = http.createServer (req, res) ->
   console.log req.headers
 
@@ -46,49 +28,49 @@ server = http.createServer (req, res) ->
 
         fs.mkdir file_path(uuid), () ->
 
-        utils.mongo (files) ->
-          files.insert _.extend({'uuid': uuid}, req.headers), (err, file) ->
-            if err
-              console.log "Mongo error" + err
-              throw err
+        utils.save_json _.extend({'uuid': uuid}, req.headers)
         
     when 'PUT'
       file_id = req.url.slice(7)
-      utils.mongo (files) ->
-        files.update {uuid: file_id}, {$set: {'content-length': req.headers['content-length']}}, (err, file) ->
-          throw err if err
+      utils.get_json (file) ->
+        utils.save_json _.extend file, {'content-length': req.headers['content-length']}
+
+        req.on 'data', (chunk) ->
+          filename = file['content-disposition'].split('filename')[1].split('"')[1]
+          fs.writeFile file_path(file['uuid'], filename), chunk, {flag: 'a+'}, (err) ->
+            throw err if err
+
+        req.on 'end', ->
+          console.log 'Receive End!'
           
-        files.findOne {uuid: file_id}, (err, file) ->
-          if err
-            console.log "Mongo error" + err
-            throw err
+          headers =
+            'Range': 'bytes=0-' + (parseInt(file['content-range'].split('/')[1]) - 1)
+            'Content-Length': 0
 
-          req.on 'data', (chunk) ->
-            filename = file['content-disposition'].split('filename')[1].split('"')[1]
-            fs.writeFile file_path(file['uuid'], filename), chunk, {flag: 'a+'}, (err) ->
-              throw err if err
+          res.writeHead 200, headers
+          res.write '\n'
+          res.end
 
-          req.on 'end', ->
-            console.log 'Receive End!'
-            
-            headers =
-              'Range': 'bytes=0-' + (parseInt(file['content-range'].split('/')[1]) - 1)
-              'Content-Length': 0
-
-            res.writeHead 200, headers
-            res.write '\n'
-            res.end
       
     when 'HEAD'
 
       file_id = req.url.slice(7)
-      utils.mongo (files) ->
-        get_head_headers files, file_id, (headers) ->
-        res.writeHead(200, headers)
-        res.write '\n'
-        res.end
+      utils.get_json (file) ->
 
-server.timeout = 8000
+        fs.stat 'files/' + file['uuid'] + '/' + file['content-disposition'].split('filename')[1].split('"')[1], (err, stat) ->
+          headers =
+            'Content-Type': file['content-type']
+            'Content-Length': file['content-length']
+            'Content-Disposition': file['content-disposition']
+            'Range': 0 + '-' + stat['size']
+
+          console.log "Radio is Head"
+
+          res.writeHead 200, headers
+          res.write '\n'
+          res.close
+
+server.timeout = 2000
 
 server.listen 3001, '127.0.0.1'
 

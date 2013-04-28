@@ -16,7 +16,7 @@ send_request = (data, options, is_network_bad, callback) ->
     console.log 'HEADERS:' + JSON.stringify(res.headers)
     res.setEncoding('utf-8')
     callback null, res
-
+    
   if _.isString(data) || Buffer.isBuffer(data)
     start = 0
     buffer_length = 65536
