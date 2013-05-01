@@ -25,7 +25,6 @@ get_head_headers = (files, file_id, callback) ->
         'Content-Disposition': file['content-disposition']
         'Range': 0 + '-' + stat['size']
 
-      console.log "Radio is Head"
       callback headers
 
 
@@ -62,31 +61,33 @@ server = http.createServer (req, res) ->
           if err
             console.log "Mongo error" + err
             throw err
+          length = 0
 
           req.on 'data', (chunk) ->
             filename = file['content-disposition'].split('filename')[1].split('"')[1]
+            length += chunk.length
             fs.writeFile file_path(file['uuid'], filename), chunk, {flag: 'a+'}, (err) ->
               throw err if err
 
           req.on 'end', ->
-            console.log 'Receive End!'
-            
             headers =
               'Range': 'bytes=0-' + (parseInt(file['content-range'].split('/')[1]) - 1)
               'Content-Length': 0
 
+            console.log "Receive Data End!!"
+            console.log headers
+            console.log length
+
             res.writeHead 200, headers
-            res.write '\n'
-            res.end
+            res.end()
       
     when 'HEAD'
 
       file_id = req.url.slice(7)
       utils.mongo (files) ->
         get_head_headers files, file_id, (headers) ->
-        res.writeHead(200, headers)
-        res.write '\n'
-        res.end
+          res.writeHead(200, headers)
+          res.end()
 
 server.timeout = 8000
 
