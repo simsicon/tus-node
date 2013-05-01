@@ -8,7 +8,6 @@ send_request = (data, options, is_network_bad, callback) ->
   req = http.request options
 
   req.on 'error', (err) ->
-    # console.log 'Problem with request:' + err.message
     callback err
 
   req.on 'response', (res) ->
@@ -68,8 +67,6 @@ post_file = (meta, callback) ->
     callback err, res
 
 put_file = (meta, callback) ->
-  console.log "put file, and i got a meta"
-  console.log meta
   range_start = parseInt(meta['range'][0])
   range_end = parseInt(meta['range'][1])
 
@@ -87,11 +84,6 @@ put_file = (meta, callback) ->
     is_network_bad = true
   else
     is_network_bad = false
-
-  console.log "IS network bad? " + is_network_bad
-  console.log "Range: " + range_start + '-' + range_end
-  console.log data.length
-  console.log opts
 
   send_request data, _.extend(shared_opts(), opts), is_network_bad, (err, res) ->
     callback err, res
@@ -117,7 +109,6 @@ resume_upload_file = (meta, callback) ->
     console.log err if err
     range = [range[1], meta['range'][1]]
     meta = _.extend(meta, {range: range})
-    console.log meta
     put_file meta, (err, res) ->
       callback err, res
 
@@ -131,13 +122,11 @@ fs.readFile file_path, (err, data) ->
 
   upload_file meta, (err, res) ->
     
-    console.log 'Upload Failed' 
-    console.log meta
+    console.log 'Upload Failed, Try to resume upload' 
     if err
       resume_upload_file meta, (err, res) ->
         console.log err if err
-        console.log res['headers']
-
+        console.log "Upload success!"
 # upload_file meta, (err, meta, res) ->
 
     # resume_upload_file location, (err, res) ->

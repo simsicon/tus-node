@@ -27,10 +27,7 @@ get_head_headers = (files, file_id, callback) ->
 
       callback headers
 
-
 server = http.createServer (req, res) ->
-  console.log req.headers
-
   switch req.method.toUpperCase()
     when 'POST'
       if url.parse(req.url).pathname == '/files'
@@ -73,10 +70,6 @@ server = http.createServer (req, res) ->
             headers =
               'Range': 'bytes=0-' + (parseInt(file['content-range'].split('/')[1]) - 1)
               'Content-Length': 0
-
-            console.log "Receive Data End!!"
-            console.log headers
-            console.log length
 
             res.writeHead 200, headers
             res.end()
